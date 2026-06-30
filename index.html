@@ -2,10 +2,11 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>3D抽卡演出系统</title>
+<title>SSR 3D角色抽卡</title>
 
 <style>
 body { margin:0; overflow:hidden; background:black; }
+
 #ui {
     position:absolute;
     top:20px;
@@ -17,13 +18,13 @@ body { margin:0; overflow:hidden; background:black; }
 
 button {
     padding:12px 20px;
-    font-size:16px;
     margin:5px;
+    font-size:16px;
 }
 
 #text {
-    font-size:20px;
     margin-top:10px;
+    font-size:20px;
 }
 </style>
 </head>
@@ -31,18 +32,20 @@ button {
 <body>
 
 <div id="ui">
-<h2>✨ SSR抽卡演出系统</h2>
-<button onclick="draw()">抽卡</button>
-<div id="text">准备抽卡...</div>
+<h2>🔥 SSR角色抽卡系统</h2>
+<button onclick="summon()">抽卡召唤</button>
+<div id="text">准备召唤SSR角色</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/loaders/GLTFLoader.js"></script>
 
 <script>
 
 let scene, camera, renderer;
-let card, light;
-let animating = false;
+let model = null;
+let mixer;
+let clock = new THREE.Clock();
 
 init();
 
@@ -51,105 +54,104 @@ function init(){
     scene = new THREE.Scene();
 
     camera = new THREE.PerspectiveCamera(
-        70,
+        60,
         window.innerWidth/window.innerHeight,
         0.1,
         1000
     );
 
-    camera.position.z = 5;
+    camera.position.set(0,1,5);
 
     renderer = new THREE.WebGLRenderer({antialias:true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // ===== 卡牌主体 =====
-    let geometry = new THREE.PlaneGeometry(2,3);
-
-    let material = new THREE.MeshBasicMaterial({
-        color:0x333333,
-        side:THREE.DoubleSide
-    });
-
-    card = new THREE.Mesh(geometry, material);
-    scene.add(card);
-
-    // ===== 光源 =====
-    light = new THREE.PointLight(0xffffff,2,100);
-    light.position.set(0,0,5);
+    // 光源
+    let light = new THREE.HemisphereLight(0xffffff,0x444444,2);
     scene.add(light);
 
     animate();
 }
 
-function animate(){
-    requestAnimationFrame(animate);
+// ===== 加载模型 =====
+function loadModel(url,color){
 
-    if(animating){
-        card.rotation.y += 0.15;
-        card.scale.set(
-            1 + Math.sin(Date.now()*0.01)*0.05,
-            1 + Math.sin(Date.now()*0.01)*0.05,
-            1
-        );
+    if(model){
+        scene.remove(model);
     }
 
-    renderer.render(scene, camera);
+    let loader = new THREE.GLTFLoader();
+
+    loader.load(url,(gltf)=>{
+
+        model = gltf.scene;
+        model.scale.set(1.5,1.5,1.5);
+        model.position.y = -1;
+
+        scene.add(model);
+
+        document.getElementById("text").innerHTML =
+            "角色已召唤！";
+
+    });
 }
 
-// ===== 抽卡演出 =====
-function draw(){
+// ===== 抽卡召唤 =====
+function summon(){
 
-    animating = true;
+    let r = Math.random()*100;
 
-    document.getElementById("text").innerHTML = "抽卡中...";
+    if(r < 1){
+        document.getElementById("text").innerHTML = "🔥 SSR降临！！！";
 
-    setTimeout(()=>{
+        // 👉 这里放你的SSR模型
+        loadModel("https://model-url/ssr.glb");
 
-        let r = Math.random()*100;
+        cameraShake();
 
-        if(r < 1){
-            showSSR();
-        }else if(r < 6){
-            showSR();
-        }else{
-            showR();
+    } else if(r < 6){
+        document.getElementById("text").innerHTML = "⭐ SR角色出现";
+
+        loadModel("https://model-url/sr.glb");
+
+    } else {
+        document.getElementById("text").innerHTML = "R普通角色";
+
+        loadModel("https://model-url/r.glb");
+    }
+}
+
+// ===== 镜头震动（SSR特效）=====
+function cameraShake(){
+
+    let t = 0;
+    let interval = setInterval(()=>{
+
+        camera.position.x = Math.sin(t)*0.1;
+        camera.position.y = Math.cos(t)*0.1;
+
+        t += 0.5;
+
+        if(t > 10){
+            clearInterval(interval);
+            camera.position.set(0,1,5);
         }
 
-    },1500);
+    },30);
 }
 
-// ===== SSR演出 =====
-function showSSR(){
+// ===== 渲染循环 =====
+function animate(){
 
-    card.material.color.set(0xffd700);
-    light.color.set(0xffd700);
-    light.intensity = 5;
+    requestAnimationFrame(animate);
 
-    document.getElementById("text").innerHTML =
-        "🔥 SSR！神级角色降临！";
-}
+    let delta = clock.getDelta();
 
-// ===== SR演出 =====
-function showSR(){
+    if(model){
+        model.rotation.y += 0.01;
+    }
 
-    card.material.color.set(0x00ffcc);
-    light.color.set(0x00ffcc);
-    light.intensity = 3;
-
-    document.getElementById("text").innerHTML =
-        "⭐ SR稀有角色！";
-}
-
-// ===== R演出 =====
-function showR(){
-
-    card.material.color.set(0x555555);
-    light.color.set(0x888888);
-    light.intensity = 1;
-
-    document.getElementById("text").innerHTML =
-        "R普通角色";
+    renderer.render(scene,camera);
 }
 
 </script>
