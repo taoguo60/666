@@ -1,89 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
-<title>WebGL修复终极版</title>
-
-<style>
-html, body {
-    margin:0;
-    padding:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    background:black;
-}
-
-canvas {
-    display:block !important;
-    width:100% !important;
-    height:100% !important;
-}
-</style>
-</head>
-
 <body>
 
-<div style="
-position:absolute;
-z-index:10;
-color:white;
-padding:10px;
-">
-如果看到红色方块 = 成功
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<h2>WebGL检测中...</h2>
 
 <script>
 
-console.log("start");
+function testWebGL(){
 
-const scene = new THREE.Scene();
+    let canvas = document.createElement("canvas");
 
-const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-);
+    let gl = canvas.getContext("webgl") ||
+              canvas.getContext("experimental-webgl");
 
-camera.position.z = 3;
+    if(!gl){
+        document.body.innerHTML =
+        "<h1 style='color:red'>❌ WebGL完全不可用</h1>";
+        return;
+    }
 
-const renderer = new THREE.WebGLRenderer({
-    antialias:true,
-    powerPreference:"high-performance"
-});
+    document.body.innerHTML =
+    "<h1 style='color:green'>✅ WebGL可用</h1>";
 
-// 🔥 强制尺寸（关键）
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(window.devicePixelRatio);
-
-// 🔥 强制插入
-document.body.appendChild(renderer.domElement);
-
-// 🔥 强制背景
-renderer.setClearColor(0x000000);
-
-const cube = new THREE.Mesh(
-    new THREE.BoxGeometry(),
-    new THREE.MeshBasicMaterial({color:0xff0000})
-);
-
-scene.add(cube);
-
-function animate(){
-    requestAnimationFrame(animate);
-
-    cube.rotation.x += 0.02;
-    cube.rotation.y += 0.02;
-
-    renderer.render(scene, camera);
 }
 
-animate();
-
-console.log("running");
+testWebGL();
 
 </script>
 
