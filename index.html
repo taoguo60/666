@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>SSR抽卡小游戏</title>
+
+<style>
+body {
+    background:#0f0f0f;
+    color:white;
+    text-align:center;
+    font-family:Arial;
+}
+
+h1 { margin-top:30px; }
+
+button {
+    padding:12px 20px;
+    margin:8px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+.card {
+    margin-top:20px;
+    font-size:22px;
+}
+
+.ssr {
+    color:gold;
+    font-size:26px;
+    text-shadow:0 0 10px gold;
+}
+
+.box {
+    margin-top:20px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+}
+
+.item {
+    width:120px;
+    margin:5px;
+    padding:5px;
+    border:1px solid #333;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🔥 SSR抽卡世界</h1>
+
+<button onclick="draw()">🎴 抽卡</button>
+<button onclick="ad()">📺 看广告 +500战力</button>
+<button onclick="resetData()">重置存档</button>
+
+<div id="result" class="card">开始你的欧皇之旅</div>
+<div id="power" class="card">战力：0</div>
+
+<h2>📦 背包</h2>
+<div id="bag" class="box"></div>
+
+<script>
+
+let bag = [];
+let power = 0;
+
+// ===== 读取存档 =====
+function load(){
+    let data = localStorage.getItem("ssr_game");
+    if(data){
+        let obj = JSON.parse(data);
+        bag = obj.bag;
+        power = obj.power;
+    }
+    update();
+}
+
+// ===== 抽卡 =====
+function draw(){
+
+    let r = Math.random()*100;
+    let card = "";
+    let p = 0;
+
+    if(r < 1){
+        card = "SSR｜神·孙悟空🔥";
+        p = 1000;
+    } else if(r < 6){
+        card = "SR｜剑圣⭐";
+        p = 300;
+    } else {
+        card = "R｜战士";
+        p = 100;
+    }
+
+    bag.push(card);
+    power += p;
+
+    document.getElementById("result").innerHTML =
+        "<div class='ssr'>获得：" + card + "</div>";
+
+    save();
+    update();
+}
+
+// ===== 广告奖励 =====
+function ad(){
+    power += 500;
+    alert("📺 广告奖励 +500战力");
+    save();
+    update();
+}
+
+// ===== 存档 =====
+function save(){
+    localStorage.setItem("ssr_game", JSON.stringify({
+        bag:bag,
+        power:power
+    }));
+}
+
+// ===== 更新UI =====
+function update(){
+
+    document.getElementById("power").innerHTML =
+        "⚔ 战力：" + power;
+
+    let html = "";
+    for(let i=0;i<bag.length;i++){
+        html += "<div class='item'>" + bag[i] + "</div>";
+    }
+
+    document.getElementById("bag").innerHTML = html;
+}
+
+// ===== 重置 =====
+function resetData(){
+    localStorage.removeItem("ssr_game");
+    bag = [];
+    power = 0;
+    update();
+}
+
+load();
+
+</script>
+
+</body>
+</html>
