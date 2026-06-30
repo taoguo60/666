@@ -1,150 +1,156 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>SSR抽卡小游戏</title>
+<meta charset="utf-8">
+<title>3D抽卡演出系统</title>
 
 <style>
-body {
-    background:#0f0f0f;
-    color:white;
+body { margin:0; overflow:hidden; background:black; }
+#ui {
+    position:absolute;
+    top:20px;
+    width:100%;
     text-align:center;
-    font-family:Arial;
+    color:white;
+    z-index:10;
 }
-
-h1 { margin-top:30px; }
 
 button {
     padding:12px 20px;
-    margin:8px;
     font-size:16px;
-    cursor:pointer;
-}
-
-.card {
-    margin-top:20px;
-    font-size:22px;
-}
-
-.ssr {
-    color:gold;
-    font-size:26px;
-    text-shadow:0 0 10px gold;
-}
-
-.box {
-    margin-top:20px;
-    display:flex;
-    flex-wrap:wrap;
-    justify-content:center;
-}
-
-.item {
-    width:120px;
     margin:5px;
-    padding:5px;
-    border:1px solid #333;
+}
+
+#text {
+    font-size:20px;
+    margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>🔥 SSR抽卡世界</h1>
+<div id="ui">
+<h2>✨ SSR抽卡演出系统</h2>
+<button onclick="draw()">抽卡</button>
+<div id="text">准备抽卡...</div>
+</div>
 
-<button onclick="draw()">🎴 抽卡</button>
-<button onclick="ad()">📺 看广告 +500战力</button>
-<button onclick="resetData()">重置存档</button>
-
-<div id="result" class="card">开始你的欧皇之旅</div>
-<div id="power" class="card">战力：0</div>
-
-<h2>📦 背包</h2>
-<div id="bag" class="box"></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
 
-let bag = [];
-let power = 0;
+let scene, camera, renderer;
+let card, light;
+let animating = false;
 
-// ===== 读取存档 =====
-function load(){
-    let data = localStorage.getItem("ssr_game");
-    if(data){
-        let obj = JSON.parse(data);
-        bag = obj.bag;
-        power = obj.power;
-    }
-    update();
+init();
+
+function init(){
+
+    scene = new THREE.Scene();
+
+    camera = new THREE.PerspectiveCamera(
+        70,
+        window.innerWidth/window.innerHeight,
+        0.1,
+        1000
+    );
+
+    camera.position.z = 5;
+
+    renderer = new THREE.WebGLRenderer({antialias:true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // ===== 卡牌主体 =====
+    let geometry = new THREE.PlaneGeometry(2,3);
+
+    let material = new THREE.MeshBasicMaterial({
+        color:0x333333,
+        side:THREE.DoubleSide
+    });
+
+    card = new THREE.Mesh(geometry, material);
+    scene.add(card);
+
+    // ===== 光源 =====
+    light = new THREE.PointLight(0xffffff,2,100);
+    light.position.set(0,0,5);
+    scene.add(light);
+
+    animate();
 }
 
-// ===== 抽卡 =====
+function animate(){
+    requestAnimationFrame(animate);
+
+    if(animating){
+        card.rotation.y += 0.15;
+        card.scale.set(
+            1 + Math.sin(Date.now()*0.01)*0.05,
+            1 + Math.sin(Date.now()*0.01)*0.05,
+            1
+        );
+    }
+
+    renderer.render(scene, camera);
+}
+
+// ===== 抽卡演出 =====
 function draw(){
 
-    let r = Math.random()*100;
-    let card = "";
-    let p = 0;
+    animating = true;
 
-    if(r < 1){
-        card = "SSR｜神·孙悟空🔥";
-        p = 1000;
-    } else if(r < 6){
-        card = "SR｜剑圣⭐";
-        p = 300;
-    } else {
-        card = "R｜战士";
-        p = 100;
-    }
+    document.getElementById("text").innerHTML = "抽卡中...";
 
-    bag.push(card);
-    power += p;
+    setTimeout(()=>{
 
-    document.getElementById("result").innerHTML =
-        "<div class='ssr'>获得：" + card + "</div>";
+        let r = Math.random()*100;
 
-    save();
-    update();
+        if(r < 1){
+            showSSR();
+        }else if(r < 6){
+            showSR();
+        }else{
+            showR();
+        }
+
+    },1500);
 }
 
-// ===== 广告奖励 =====
-function ad(){
-    power += 500;
-    alert("📺 广告奖励 +500战力");
-    save();
-    update();
+// ===== SSR演出 =====
+function showSSR(){
+
+    card.material.color.set(0xffd700);
+    light.color.set(0xffd700);
+    light.intensity = 5;
+
+    document.getElementById("text").innerHTML =
+        "🔥 SSR！神级角色降临！";
 }
 
-// ===== 存档 =====
-function save(){
-    localStorage.setItem("ssr_game", JSON.stringify({
-        bag:bag,
-        power:power
-    }));
+// ===== SR演出 =====
+function showSR(){
+
+    card.material.color.set(0x00ffcc);
+    light.color.set(0x00ffcc);
+    light.intensity = 3;
+
+    document.getElementById("text").innerHTML =
+        "⭐ SR稀有角色！";
 }
 
-// ===== 更新UI =====
-function update(){
+// ===== R演出 =====
+function showR(){
 
-    document.getElementById("power").innerHTML =
-        "⚔ 战力：" + power;
+    card.material.color.set(0x555555);
+    light.color.set(0x888888);
+    light.intensity = 1;
 
-    let html = "";
-    for(let i=0;i<bag.length;i++){
-        html += "<div class='item'>" + bag[i] + "</div>";
-    }
-
-    document.getElementById("bag").innerHTML = html;
+    document.getElementById("text").innerHTML =
+        "R普通角色";
 }
-
-// ===== 重置 =====
-function resetData(){
-    localStorage.removeItem("ssr_game");
-    bag = [];
-    power = 0;
-    update();
-}
-
-load();
 
 </script>
 
