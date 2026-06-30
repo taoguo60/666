@@ -2,54 +2,76 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>WebGL诊断</title>
+<title>渲染测试</title>
+
+<style>
+body {
+    margin:0;
+    overflow:hidden;
+    background:black;
+}
+canvas {
+    display:block;
+}
+</style>
 </head>
 
 <body>
 
-<h2 style="color:red;">WebGL测试中...</h2>
+<h1 style="color:white;position:absolute;z-index:10;">如果看到红方块说明成功</h1>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
 
-try {
+console.log("JS开始执行");
 
-    console.log("开始初始化WebGL");
+const scene = new THREE.Scene();
 
-    const renderer = new THREE.WebGLRenderer();
+const camera = new THREE.PerspectiveCamera(
+    75,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
 
-    if (!renderer) {
-        alert("❌ renderer创建失败");
-    }
+camera.position.z = 3;
 
-    document.body.appendChild(renderer.domElement);
+console.log("准备创建renderer");
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
 
-    camera.position.z = 2;
-
-    const cube = new THREE.Mesh(
-        new THREE.BoxGeometry(),
-        new THREE.MeshBasicMaterial({color:0xff0000})
-    );
-
-    scene.add(cube);
-
-    function animate(){
-        requestAnimationFrame(animate);
-        cube.rotation.y += 0.02;
-        renderer.render(scene, camera);
-    }
-
-    animate();
-
-} catch (e) {
-
-    alert("WebGL错误：" + e.message);
-
+if (!renderer) {
+    alert("renderer创建失败");
 }
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+document.body.appendChild(renderer.domElement);
+
+console.log("canvas已添加");
+
+const geometry = new THREE.BoxGeometry();
+const material = new THREE.MeshBasicMaterial({color:0xff0000});
+const cube = new THREE.Mesh(geometry, material);
+
+scene.add(cube);
+
+console.log("物体已创建");
+
+function animate(){
+
+    requestAnimationFrame(animate);
+
+    cube.rotation.x += 0.02;
+    cube.rotation.y += 0.02;
+
+    renderer.render(scene, camera);
+}
+
+animate();
+
+console.log("动画启动");
 
 </script>
 
