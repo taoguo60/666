@@ -2,29 +2,42 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>渲染测试</title>
+<title>WebGL修复终极版</title>
 
 <style>
-body {
+html, body {
     margin:0;
+    padding:0;
+    width:100%;
+    height:100%;
     overflow:hidden;
     background:black;
 }
+
 canvas {
-    display:block;
+    display:block !important;
+    width:100% !important;
+    height:100% !important;
 }
 </style>
 </head>
 
 <body>
 
-<h1 style="color:white;position:absolute;z-index:10;">如果看到红方块说明成功</h1>
+<div style="
+position:absolute;
+z-index:10;
+color:white;
+padding:10px;
+">
+如果看到红色方块 = 成功
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
 
 <script>
 
-console.log("JS开始执行");
+console.log("start");
 
 const scene = new THREE.Scene();
 
@@ -37,30 +50,29 @@ const camera = new THREE.PerspectiveCamera(
 
 camera.position.z = 3;
 
-console.log("准备创建renderer");
+const renderer = new THREE.WebGLRenderer({
+    antialias:true,
+    powerPreference:"high-performance"
+});
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
-
-if (!renderer) {
-    alert("renderer创建失败");
-}
-
+// 🔥 强制尺寸（关键）
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio);
 
+// 🔥 强制插入
 document.body.appendChild(renderer.domElement);
 
-console.log("canvas已添加");
+// 🔥 强制背景
+renderer.setClearColor(0x000000);
 
-const geometry = new THREE.BoxGeometry();
-const material = new THREE.MeshBasicMaterial({color:0xff0000});
-const cube = new THREE.Mesh(geometry, material);
+const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(),
+    new THREE.MeshBasicMaterial({color:0xff0000})
+);
 
 scene.add(cube);
 
-console.log("物体已创建");
-
 function animate(){
-
     requestAnimationFrame(animate);
 
     cube.rotation.x += 0.02;
@@ -71,7 +83,7 @@ function animate(){
 
 animate();
 
-console.log("动画启动");
+console.log("running");
 
 </script>
 
